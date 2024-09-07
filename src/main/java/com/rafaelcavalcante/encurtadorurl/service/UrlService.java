@@ -6,8 +6,12 @@ import com.rafaelcavalcante.encurtadorurl.model.dto.UrlRequest;
 import com.rafaelcavalcante.encurtadorurl.repository.UrlRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
 import java.time.LocalDateTime;
 
 @Service
@@ -19,7 +23,7 @@ public class UrlService {
         this.urlRepository = urlRepository;
     }
 
-    public UrlReponse gerarUrlEncurtada(UrlRequest urlRequest, HttpServletRequest httpServletRequest) {
+    public UrlReponse criarUrlEncurtada(UrlRequest urlRequest, HttpServletRequest httpServletRequest) {
         String id;
 
         do {
@@ -31,5 +35,18 @@ public class UrlService {
         var redirectUrl = httpServletRequest.getRequestURL().toString().replace("encurtador-url", id);
 
         return new UrlReponse(redirectUrl);
+    }
+
+    public ResponseEntity<Void> buscar(String id){
+        var url = this.urlRepository.findById(id);
+
+        if(url.isEmpty()){
+            return ResponseEntity.notFound().build();
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setLocation(URI.create(url.get().getUrlCompleta()));
+
+        return ResponseEntity.status(HttpStatus.FOUND).headers(headers).build();
     }
 }
